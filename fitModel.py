@@ -32,12 +32,23 @@ def model_memory(x, w, b, theta):
     '''
     return ((w * x) + b) * theta
 
+def model_gpu_use(x):
+    '''
+        拟合GPU利用率曲线
+    '''
+    return x**2
+
+def model_total_time(x):
+    '''
+        拟合时间曲线
+    '''
+    return x**2
+
+
 if __name__ == "__main__":
     batch_size_arr, gpu_use_arr, gpu_memory_arr = data_fetch()
     popt, pcov = curve_fit(model_memory, batch_size_arr, gpu_memory_arr)
-    model_memory_w = popt[0]
-    model_memory_b = popt[1]
-    model_memory_theta = popt[2]
+    model_memory_w, model_memory_b, model_memory_theta= popt
     print(popt)
     memory_result = model_memory(batch_size_arr, model_memory_w, model_memory_b, model_memory_theta)
     plt.plot(batch_size_arr, gpu_memory_arr)
