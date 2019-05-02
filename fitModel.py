@@ -14,12 +14,12 @@ def data_fetch():
         返回的列表长度应该保持一致
     '''
     xlsx_data = xlrd.open_workbook(data_file_name)  # 打开xlsx文件
-    table = xlsx_data.sheet_by_index(0)             # 根据sheet索引获取第一个sheet
+    table = xlsx_data.sheet_by_index(1)             # 根据sheet索引获取第一个sheet
 
     # preocess_table_cell = lambda x : x.value()
     batch_size_arr = table.col_values(0)[1:]
     gpu_use_arr = table.col_values(1)[1:]
-    gpu_memory_arr = table.col_values(3)[1:]
+    gpu_memory_arr = table.col_values(2)[1:]
     return np.array(batch_size_arr), np.array(gpu_use_arr), np.array(gpu_memory_arr)
 
 def model_memory(x, w, b, theta):
