@@ -81,6 +81,9 @@ class GPUStat(object):
         """
         return int(self.entry['memory.used'])
 
+    def get_memory_used(self):
+        return int(self.entry['memory.used'])
+        
     @property
     def memory_free(self):
         """
