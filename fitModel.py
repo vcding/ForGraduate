@@ -225,32 +225,31 @@ def model_parallel_time(choice=1):
     per_gpu = 0.5
     if(choice == 1):
         return lambda x, w, b: w * x / per_gpu + b
-    elif(choid == 2):
+    elif(choice == 2):
         return lambda x, w, b: w * x /per_gpu + b 
 
 if __name__ == "__main__":
     batch_size_arr, gpu_used_arr, gpu_memory_arr = fetch_resnet_gpu_data(47)
-    #s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(32)
+    s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(47)
+
+    model = model_gpu_memory(2)
+    parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=False, title= "GPU Memroy")
     
-    # model = model_gpu_memory(3)
-    # parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
-   
+
     # model = model_all_step(2)
     # parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True)
 
-    #model = model_step_time(1)
-    #parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=True, title="Step Time")
+    model = model_step_time(1)
+    parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=False, title="Step Time")
 
-    #model = model_total_time(1)
-    #parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
+    model = model_total_time(1)
+    parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
 
-
-    #data_47_batch_size, data_47_gpu_used, data_47_gpu_memory = data_fetch()
-    #model = model_gpu_use(5)
-    #parm = curve_model(data_47_batch_size, data_47_gpu_used, model, isShow=True, title= "GPU Used")
+    model = model_gpu_use(5)
+    parm = curve_model(batch_size_arr, gpu_used_arr, model, isShow=True, title= "GPU Used")
 
 
-    s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(47)
+    # s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(47)
     #model = model_gpu_memory(2)
     #parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
     model = model_all_step(5)
