@@ -131,6 +131,10 @@ def model_gpu_use(choice=1):
         return lambda x, w, b: 1 - 1 / (math.e ** (x * w + b) + 1)  # 一般般
     elif(choice == 4):
         return lambda x, w, b: 1 - 1 / (w * x + b) ** 2 + 1 
+    elif(choice == 5):
+        return lambda x, w, b: 1 - 1 / (math.e ** (np.log2(x) * w + b) + 1)  
+    elif(choice == 6):
+        return lambda x, w, b: 1 - 1 / (math.e ** (-(np.log2(x) * w + b) + 1))   
 
 def model_gpu_memory(choice=1):
     '''
@@ -170,26 +174,38 @@ def model_all_step(choice=1):
         return lambda x, w, w1, b: w * ( x ** -2) + w1 / x + b # 效果韩星
     elif(choice == 3):
         return lambda x, w, b: w * ( x ** -2) + b  # 效果不行 有负值
+    elif(choice == 4):
+        return lambda x, w, b: w / x + b
+    elif(choice == 5):
+        return lambda x, w, w1, b: w /(x ** 2) + w1 / x + b        
 
 
 
 if __name__ == "__main__":
     batch_size_arr, gpu_used_arr, gpu_memory_arr = fetch_resnet_gpu_data(47)
-    s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(32)
+    #s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(32)
+    
     # model = model_gpu_memory(3)
     # parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
    
     # model = model_all_step(2)
     # parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True)
 
-    # model = model_step_time(1)
-    # parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=True, title="Step Time")
+    #model = model_step_time(1)
+    #parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=True, title="Step Time")
 
-    model = model_total_time(1)
-    parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
+    #model = model_total_time(1)
+    #parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
 
 
-    # data_47_batch_size, data_47_gpu_used, data_47_gpu_memory = data_fetch()
-    # model = model_gpu_use(4)
-    # parm = curve_model(data_47_batch_size, data_47_gpu_used, model, isShow=True, title= "GPU Used")
+    #data_47_batch_size, data_47_gpu_used, data_47_gpu_memory = data_fetch()
+    #model = model_gpu_use(5)
+    #parm = curve_model(data_47_batch_size, data_47_gpu_used, model, isShow=True, title= "GPU Used")
+
+
+    s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(47)
+    #model = model_gpu_memory(2)
+    #parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
+    model = model_all_step(5)
+    parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True, title = "All Steps")
     print(parm)
