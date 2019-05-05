@@ -26,6 +26,18 @@ def data_fetch():
     # step_time_arr = table.col_values(8)[1:]
     return np.array(batch_size_arr), np.array(gpu_use_arr), np.array(gpu_memory_arr)
 
+def fetch_parallel_data():
+    xlsx_data = xlrd.open_workbook(data_file_name)  # 打开xlsx文件
+    table = xlsx_data.sheet_by_index(3)             # 根据sheet索引获取第一个sheet
+
+    # preocess_table_cell = lambda x : x.value()
+    gpu_use_arr = np.array(table.col_values(0)[1:])
+    single_time_arr = np.array(table.col_values(1)[1:])
+    parallel_time_arr = np.array(table.col_values(2)[1:])
+    friend_gpu_use_arr = np.array(table.col_values(3)[1:])
+    friend_single_time_arr = np.array(table.col_values(4)[1:])
+
+    return gpu_use_arr, single_time_arr, parallel_time_arr, friend_gpu_use_arr, friend_single_time_arr
 
 def fetch_resnet_gpu_data(type):
     '''
@@ -118,6 +130,31 @@ def curve_model(x, y, model, isShow=False, title="Y value"):
 
     return popt
 
+def curve_parallel_time():
+    p_gpu_use_arr, p_single_time_arr, p_parallel_time_arr, friend_gpu_use_arr, friend_single_time_arr = fetch_parallel_data()
+    '''
+        模拟的模型为: T并行 = (w * job利用率和 + b) * T单独时间和 * 竞争job的利用率/job利用率和 + c
+                             ---------------------------------    -------------------------  
+                                           ☝                                 ☝
+                                      计算出总时间                    最终的时间和利用率成反比
+     '''
+    use_sum = p_gpu_use_arr + friend_gpu_use_arr
+    time_sum = p_single_time_arr + friend_single_time_arr
+    use_scale = friend_gpu_use_arr / use_sum
+    time_scale = p_parallel_time_arr / p_single_time_arr
+
+    def model (x, w, b):
+        return w * x + b
+    
+    # popt, pcov = curve_fit(model, use_scale, time_scale)
+    # xaxis = [ (i + 1) for i in range(len(p_gpu_use_arr))]
+    # y_predict = model(use_scale, popt[0], popt[1])
+    # plt.plot(xaxis, time_scale)
+    # plt.plot(xaxis, y_predict)
+    plt.scatter(p_gpu_use_arr, p_parallel_time_arr/p_single_time_arr)
+    plt.show()    
+
+    print(gpu_use_arr)
 
 def model_gpu_use(choice=1):
     '''
@@ -179,7 +216,17 @@ def model_all_step(choice=1):
     elif(choice == 5):
         return lambda x, w, w1, b: w /(x ** 2) + w1 / x + b        
 
-
+def model_parallel_time(choice=1):
+    '''
+        拟合并行运行时 单独时长 和 并行时长之间的关系
+        拟合曲线 y 表示 并行时长/单独时长
+        拟合曲线 x 表示 job对应的gpu利用率
+    '''
+    per_gpu = 0.5
+    if(choice == 1):
+        return lambda x, w, b: w * x / per_gpu + b
+    elif(choid == 2):
+        return lambda x, w, b: w * x /per_gpu + b 
 
 if __name__ == "__main__":
     batch_size_arr, gpu_used_arr, gpu_memory_arr = fetch_resnet_gpu_data(47)
@@ -209,3 +256,7 @@ if __name__ == "__main__":
     model = model_all_step(5)
     parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True, title = "All Steps")
     print(parm)
+
+
+    # 获取并行运行的数据
+    # curve_parallel_time()
