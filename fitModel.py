@@ -16,15 +16,15 @@ def data_fetch():
         返回的列表长度应该保持一致
     '''
     xlsx_data = xlrd.open_workbook(data_file_name)  # 打开xlsx文件
-    table = xlsx_data.sheet_by_index(2)             # 根据sheet索引获取第一个sheet
+    table = xlsx_data.sheet_by_index(1)             # 根据sheet索引获取第一个sheet
 
     # preocess_table_cell = lambda x : x.value()
     batch_size_arr = table.col_values(0)[1:]
     gpu_use_arr = table.col_values(1)[1:]
     gpu_memory_arr = table.col_values(2)[1:]
-    gpu_all_step_arr = table.col_values(3)[1:]
-    step_time_arr = table.col_values(8)[1:]
-    return np.array(batch_size_arr), np.array(gpu_use_arr), np.array(gpu_memory_arr), np.array(gpu_all_step_arr), np.array(step_time_arr)
+    # gpu_all_step_arr = table.col_values(3)[1:]
+    # step_time_arr = table.col_values(8)[1:]
+    return np.array(batch_size_arr), np.array(gpu_use_arr), np.array(gpu_memory_arr)
 
 
 def fetch_resnet_gpu_data(type):
@@ -126,11 +126,11 @@ def model_gpu_use(choice=1):
     if(choice == 1):
         return lambda x, b: x**2 + b  # 不可能是这个了
     elif(choice == 2):
-        return lambda x, w, b: w * np.floor(np.log2(x)) + b  # 一般 不能用
+        return lambda x, w, b: w * np.log2(x) + b  # 一般 不能用
     elif(choice == 3):
-        return lambda x, w, b: w * (np.floor(np.log2(x)) + b)  # 一般般
+        return lambda x, w, b: 1 - 1 / (math.e ** (x * w + b) + 1)  # 一般般
     elif(choice == 4):
-        return lambda x, b: 1 / (1 + math.e ** x) + b
+        return lambda x, w, b: 1 - 1 / (w * x + b) ** 2 + 1 
 
 def model_gpu_memory(choice=1):
     '''
@@ -145,11 +145,19 @@ def model_gpu_memory(choice=1):
         return lambda x, w, b: w * np.floor(np.log2(x)) + b * np.floor(np.log2(x))  # 效果不行 有负值
 
 
-def model_total_time(x):
+def model_step_time(choice):
     '''
-        拟合时间曲线
+        拟合单步时间曲线
     '''
-    return x**2
+    if(choice == 1):
+            return lambda x, w, b: w * x + b
+
+def model_total_time(choice):
+    '''
+        拟合总时间曲线
+    '''
+    if(choice == 1):
+            return lambda x, w, b: w * x + b
 
 
 def model_all_step(choice=1):
@@ -168,9 +176,20 @@ def model_all_step(choice=1):
 if __name__ == "__main__":
     batch_size_arr, gpu_used_arr, gpu_memory_arr = fetch_resnet_gpu_data(47)
     s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(32)
-    model = model_gpu_memory(3)
-    parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
+    # model = model_gpu_memory(3)
+    # parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
+   
     # model = model_all_step(2)
-    # print(s_batch_size_arr)
     # parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True)
+
+    # model = model_step_time(1)
+    # parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=True, title="Step Time")
+
+    model = model_total_time(1)
+    parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
+
+
+    # data_47_batch_size, data_47_gpu_used, data_47_gpu_memory = data_fetch()
+    # model = model_gpu_use(4)
+    # parm = curve_model(data_47_batch_size, data_47_gpu_used, model, isShow=True, title= "GPU Used")
     print(parm)
