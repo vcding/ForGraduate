@@ -94,14 +94,18 @@ def fetch_resnet_steps_data(type):
     s_batch_size_arr = []
     s_steps_arr = []
     s_times_arr = []
-    inc_step = 1
-    if(len(batch_size) % inc_step + len(steps) % inc_step + len(steps) % inc_step > 0):
+    inc_step = 11
+    if(len(batch_size) % inc_step + len(steps) % inc_step + len(all_times) % inc_step > 0):
         print("Something Error")
     else:
         for _ in range(len(batch_size) // inc_step):
             s_batch_size_arr.append(batch_size[_ * inc_step])
             s_steps_arr.append(steps[_ * inc_step])
             s_times_arr.append(all_times[_ * inc_step])
+
+    # for _ in range(len(s_batch_size_arr)):
+    #     print(s_batch_size_arr[_], s_steps_arr[_], s_times_arr[_])
+
     return np.array(s_batch_size_arr), np.array(s_steps_arr), np.array(s_times_arr)
 
 def curve_model(x, y, model, isShow=False, title="Y value"):
@@ -126,7 +130,7 @@ def curve_model(x, y, model, isShow=False, title="Y value"):
         plt.legend([p1, p2], labels=['Real Data', 'Curve Data'])
         plt.xlabel("batch_size")
         plt.ylabel(title)
-        plt.show()
+        # plt.show()
 
     return popt
 
@@ -208,9 +212,9 @@ def model_all_step(choice=1):
     if(choice == 1):
         return lambda x, w, b: w * x + b
     elif(choice == 2):
-        return lambda x, w, w1, b: w * ( x ** -2) + w1 / x + b # 效果韩星
+        return lambda x, w, w1, b: w * x + w1 / x + b # 效果韩星
     elif(choice == 3):
-        return lambda x, w, b: w * ( x ** -2) + b  # 效果不行 有负值
+        return lambda x, w, b: w * (math.e ** (1 / x)) + b  #
     elif(choice == 4):
         return lambda x, w, b: w / x + b
     elif(choice == 5):
@@ -231,31 +235,45 @@ def model_parallel_time(choice=1):
 if __name__ == "__main__":
     batch_size_arr, gpu_used_arr, gpu_memory_arr = fetch_resnet_gpu_data(47)
     s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(47)
-
-    model = model_gpu_memory(2)
-    parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=False, title= "GPU Memroy")
+   
     
 
     # model = model_all_step(2)
     # parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True)
 
+    plt.figure(figsize=(18,9))
+    plt.subplot(2,3,1)
     model = model_step_time(1)
-    parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=False, title="Step Time")
+    parm = curve_model(s_batch_size_arr, time_arr / steps_arr, model, isShow=True, title="Step Time")
+    step_time_pre = model(s_batch_size_arr, parm[0], parm[1])
 
-    model = model_total_time(1)
-    parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
-
-    model = model_gpu_use(5)
-    parm = curve_model(batch_size_arr, gpu_used_arr, model, isShow=True, title= "GPU Used")
-
-
-    # s_batch_size_arr, steps_arr, time_arr = fetch_resnet_steps_data(47)
-    #model = model_gpu_memory(2)
-    #parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
-    model = model_all_step(5)
+    plt.subplot(2,3,2)
+    model = model_all_step(4)
     parm = curve_model(s_batch_size_arr, steps_arr, model, isShow=True, title = "All Steps")
+    steps_pre = model(s_batch_size_arr, parm[0], parm[1])
+    all_time_pre = steps_pre * step_time_pre
     print(parm)
 
+    min_index = all_time_pre.tolist().index(min(all_time_pre))
+    max_index = all_time_pre.tolist().index(max(all_time_pre))
+    print(s_batch_size_arr[min_index], s_batch_size_arr[max_index])
+
+    plt.subplot(2,3,3)
+    model = model_total_time(1)
+    parm = curve_model(s_batch_size_arr, time_arr, model, isShow=True, title="Total Time")
+    
+    plt.subplot(2,3,4)
+    plt.plot(s_batch_size_arr,  time_arr)
+    plt.plot(s_batch_size_arr,  steps_pre * step_time_pre)
+
+    plt.subplot(2,3,5)
+    model = model_gpu_memory(2)
+    parm = curve_model(batch_size_arr, gpu_memory_arr, model, isShow=True, title= "GPU Memroy")
+
+    plt.subplot(2,3,6)
+    model = model_gpu_use(5)
+    parm = curve_model(batch_size_arr, gpu_used_arr, model, isShow=True, title= "GPU Used")
+    plt.show()
 
     # 获取并行运行的数据
     # curve_parallel_time()
